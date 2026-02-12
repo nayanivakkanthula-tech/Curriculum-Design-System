@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gemini API Debugger</title>
+    <style>
+        body { font-family: sans-serif; padding: 20px; }
+        .success { color: green; }
+        .error { color: red; }
+        pre { background: #f0f0f0; padding: 10px; border-radius: 5px; }
+    </style>
+</head>
+<body>
+    <h1>Gemini API Browser Test</h1>
+    <p>This page tests if your browser can connect to Google Gemini API.</p>
+    
+    <div>
+        <label>API Key:</label>
+        <input type="text" id="apiKey" style="width: 300px;" value="">
+        <button onclick="testApi()">Test Connection</button>
+    </div>
+
+    <div id="status"></div>
+    <pre id="output"></pre>
+
+    <script>
+        // Try to load key from localStorage if available (optional)
+        const savedKey = localStorage.getItem('debug_api_key');
+        if (savedKey) document.getElementById('apiKey').value = savedKey;
+
+        async function testApi() {
+            const key = document.getElementById('apiKey').value.trim();
+            if (!key) {
+                alert("Please enter API Key");
+                return;
+            }
+            localStorage.setItem('debug_api_key', key);
+
+            const status = document.getElementById('status');
+            const output = document.getElementById('output');
+            
+            status.innerHTML = "Testing...";
+            output.textContent = "";
+
+            const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${key}`;
+            
+            try {
+                const response = await fetch(url, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        contents: [{ parts: [{ text: "Hello" }] }]
+                    })
+                });
+
+                const data = await response.json();
+                
+                if (response.ok) {
+                    status.innerHTML = "<h3 class='success'>Success!</h3>";
+                    output.textContent = JSON.stringify(data, null, 2);
+                } else {
+                    status.innerHTML = "<h3 class='error'>Failed (" + response.status + ")</h3>";
+                    output.textContent = JSON.stringify(data, null, 2);
+                }
+
+            } catch (e) {
+                status.innerHTML = "<h3 class='error'>Network/CORS Error</h3>";
+                output.textContent = e.message;
+            }
+        }
+    </script>
+</body>
+</html>
